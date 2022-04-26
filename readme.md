@@ -10,3 +10,5 @@ CS841: Computational Cognitive Science
 
 - [All Wordle Answers in 2022](https://progameguides.com/wordle/all-wordle-answers-in-2022-updated-daily/)
 
+- [Small World of Words](https://smallworldofwords.org/en/project/research)
+

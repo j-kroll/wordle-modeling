@@ -20,6 +20,9 @@ def get_embedding(wordle_emojis):
 def get_solution_word(wordle_id, solutions):
     return solutions[wordle_id]
 
+def get_associations(word, associations):
+    return [(k, v) for k, v in sorted(associations[word].items(), key=lambda w: w[1], reverse=True)]
+
 def main():
 
     # Read tweets
@@ -58,6 +61,20 @@ def main():
                 num_transitions += 1
             chain[start_state][end_state] += 1
     print("Found {} unique state transitions".format(num_transitions))
+
+    # Read word associations
+    associations = {}
+    with open("SWOW-EN-complete.csv") as f:
+        csv_reader = csv.reader(f, delimiter=",")
+        headers = next(csv_reader)
+        for row in csv_reader:
+            _, _, _, _, _, _, _, _, _, _, _, cue, _, _, _, r1, r2, r3 = row
+            for r in [r1, r2, r3]:
+                if cue not in associations:
+                    associations[cue] = {}
+                if r not in associations[cue]:
+                    associations[cue][r] = 0
+                associations[cue][r] += 1
 
 if __name__ == '__main__':
     main()
