@@ -1,6 +1,10 @@
 import csv
 import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
 import re
+
+START = "<START>"
+END = "<END>"
 
 def get_embedding(wordle_emojis):
     embedding = []
@@ -66,13 +70,13 @@ def main():
             solutions[wordle_id] = word
     print("Processed {} solutions".format(len(solutions)))
 
-    # Construct dictionary for transition matrix
+    # Construct transitions dictionary
     chain = {}
     num_transitions = 0
     for emb in embeddings:
         for i in range(len(emb) + 1):
-            start_state = "<START>" if i == 0 else emb[i - 1]
-            end_state = "<END>" if i == len(emb) else emb[i]
+            start_state = START if i == 0 else emb[i - 1]
+            end_state = END if i == len(emb) else emb[i]
             if not start_state in chain:
                 chain[start_state] = {}
             if not end_state in chain[start_state]:
@@ -80,6 +84,32 @@ def main():
                 num_transitions += 1
             chain[start_state][end_state] += 1
     print("Found {} unique state transitions".format(num_transitions))
+
+    # Construct transition matrix from dictionary
+    possible_states_idx = [i for i in range(245)]
+    mat = [[0 for col in range(245)] for row in range(245)]
+    possible_states = []
+    for v in range(3):
+        for w in range(3):
+            for x in range(3):
+                for y in range(3):
+                    for z in range(3):
+                        idx = "{}{}{}{}{}".format(v,w,x,y,z)
+                        possible_states.append(idx)
+    possible_states.append(START)
+    possible_states.append(END)
+    for s0, idx0 in zip(possible_states, possible_states_idx):
+        for s1, idx1 in zip(possible_states, possible_states_idx):
+            if idx0 == 242 and idx1 == 244: # TODO weird end state edge case
+                continue
+            transition_count = chain[s0][s1] if (s0 in chain and s1 in chain[s0]) else 0
+            mat[idx0][idx1] = transition_count
+
+    # Visualize transition matrix
+    plt.title("Transition matrix")
+    plt.imshow(mat, interpolation="none", cmap="copper_r", norm=LogNorm(vmin=0.01, vmax=10000))
+    plt.colorbar(orientation="vertical")
+    plt.show()
 
     # Read backward word associations
     associations = {}
@@ -128,12 +158,12 @@ def main():
             uniq_assoc.append(unique_associations)
             avg_g.append(avg_guesses)
             wds.append(word)
-            print(word.upper() + " -- Associations: {} unique, {} total; average guesses: {}".format(unique_associations, total_associations, avg_guesses))
+            # print(word.upper() + " -- Associations: {} unique, {} total; average guesses: {}".format(unique_associations, total_associations, avg_guesses))
 
     # Plot relationship between word associations and ease of solving each word
-    plot_relationship(avg_g, uniq_assoc, "Average number of guesses", "Number of unique associations", "Unique associations versus average guesses", wds)
-    plot_relationship(avg_g, total_assoc, "Average number of guesses", "Number of total associations", "Total associations versus average guesses", wds)
-    plot_relationship(total_assoc, uniq_assoc, "Number of total associations", "Number of unique associations", "Unique versus total associations", wds)
+    # plot_relationship(avg_g, uniq_assoc, "Average number of guesses", "Number of unique associations", "Unique associations versus average guesses", wds)
+    # plot_relationship(avg_g, total_assoc, "Average number of guesses", "Number of total associations", "Total associations versus average guesses", wds)
+    # plot_relationship(total_assoc, uniq_assoc, "Number of total associations", "Number of unique associations", "Unique versus total associations", wds)
 
 if __name__ == '__main__':
     main()
